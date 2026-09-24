@@ -100,7 +100,20 @@
             scrub: 0.85,
             invalidateOnRefresh: true,
             anticipatePin: 1,
-            onUpdate: self => gsap.set(horizontalProgress, { scaleX: self.progress })
+            onRefresh: self => {
+              if (window.scrollY <= self.start + 2) {
+                gsap.set(horizontalTrack, { x: 0 });
+                gsap.set(horizontalProgress, { scaleX: 0 });
+              }
+            },
+            onLeaveBack: () => {
+              gsap.set(horizontalTrack, { x: 0 });
+              gsap.set(horizontalProgress, { scaleX: 0 });
+            },
+            onUpdate: self => {
+              if (self.progress <= 0.0001) gsap.set(horizontalTrack, { x: 0 });
+              gsap.set(horizontalProgress, { scaleX: self.progress });
+            }
           }
         });
         return () => horizontalTween.kill();
@@ -210,36 +223,81 @@
     });
   });
 
+  document.querySelectorAll('[data-source-slider]').forEach(slider => {
+    const track = slider.querySelector('.source-track');
+    const cards = [...slider.querySelectorAll('.source-card')];
+    const section = slider.closest('.strength-source');
+    const previous = section?.querySelector('[data-source-prev]');
+    const next = section?.querySelector('[data-source-next]');
+    const progress = section?.querySelector('.source-controls > span i');
+    let activeIndex = 0;
+    let timer;
+
+    const render = (index, userInitiated = false) => {
+      activeIndex = (index + cards.length) % cards.length;
+      const card = cards[activeIndex];
+      const maxTravel = Math.max(0, track.scrollWidth - slider.clientWidth);
+      const target = Math.min(card.offsetLeft, maxTravel);
+      track.style.transform = `translate3d(${-target}px,0,0)`;
+      cards.forEach((item, itemIndex) => item.classList.toggle('is-active', itemIndex === activeIndex));
+      if (progress) progress.style.transform = `translateX(${activeIndex * 100}%)`;
+      if (userInitiated) restart();
+    };
+    const restart = () => {
+      window.clearInterval(timer);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        timer = window.setInterval(() => render(activeIndex + 1), 4600);
+      }
+    };
+    previous?.addEventListener('click', () => render(activeIndex - 1, true));
+    next?.addEventListener('click', () => render(activeIndex + 1, true));
+    slider.addEventListener('mouseenter', () => window.clearInterval(timer));
+    slider.addEventListener('mouseleave', restart);
+    slider.addEventListener('focusin', () => window.clearInterval(timer));
+    slider.addEventListener('focusout', event => { if (!slider.contains(event.relatedTarget)) restart(); });
+    window.addEventListener('resize', () => render(activeIndex));
+    render(0);
+    restart();
+  });
   if (window.gsap && window.ScrollTrigger && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    gsap.from('.news-card', {
+    gsap.from('.capability-copy > *', {
+      opacity: 0,
+      y: 38,
+      duration: .85,
+      stagger: .09,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '.capability-body', start: 'top 76%', toggleActions: 'play none none reverse' }
+    });
+    gsap.from('.india-mark, .network-node, .coverage-label', {
+      opacity: 0,
+      scale: .9,
+      y: 24,
+      duration: .9,
+      stagger: .08,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '.coverage-visual', start: 'top 78%', toggleActions: 'play none none reverse' }
+    });
+    gsap.from('.source-copy > *', {
+      opacity: 0,
+      y: 35,
+      duration: .8,
+      stagger: .08,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '.strength-source', start: 'top 78%', toggleActions: 'play none none reverse' }
+    });
+    gsap.from('.source-slider', {
+      opacity: 0,
+      x: 70,
+      duration: 1.05,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '.strength-source', start: 'top 78%', toggleActions: 'play none none reverse' }
+    });    gsap.from('.news-card', {
       opacity: 0,
       y: 55,
       duration: .9,
       stagger: .14,
       ease: 'power3.out',
       scrollTrigger: { trigger: '.news-grid', start: 'top 84%', toggleActions: 'play none none reverse' }
-    });
-    gsap.from('.brand-story-copy > *', {
-      opacity: 0,
-      y: 38,
-      duration: .9,
-      stagger: .12,
-      ease: 'power3.out',
-      scrollTrigger: { trigger: '.brand-story', start: 'top 70%', toggleActions: 'play none none reverse' }
-    });
-    gsap.from('.brand-stack figure', {
-      opacity: 0,
-      y: 80,
-      rotate: 4,
-      duration: 1.1,
-      stagger: .12,
-      ease: 'power3.out',
-      scrollTrigger: { trigger: '.brand-story', start: 'top 72%', toggleActions: 'play none none reverse' }
-    });
-    gsap.to('.brand-stack', {
-      yPercent: -8,
-      ease: 'none',
-      scrollTrigger: { trigger: '.brand-story', start: 'top bottom', end: 'bottom top', scrub: 1.1 }
     });
     gsap.from('.career-card', {
       opacity: 0,
@@ -250,10 +308,26 @@
       scrollTrigger: { trigger: '.career-accordion', start: 'top 84%', toggleActions: 'play none none reverse' }
     });
   }
-  window.addEventListener('pageshow', () => {
-    if (window.ScrollTrigger) {
-      requestAnimationFrame(() => ScrollTrigger.refresh(true));
-      window.setTimeout(() => ScrollTrigger.refresh(true), 250);
+  const resetHorizontalBeforeStart = () => {
+    const section = document.querySelector('.horizontal-story');
+    const track = document.querySelector('.horizontal-track');
+    const progress = document.querySelector('.horizontal-progress i');
+    if (!section || !track || window.innerWidth <= 900) return;
+    const top = section.getBoundingClientRect().top + window.scrollY;
+    if (window.scrollY <= top + 2) {
+      gsap?.set(track, { x: 0 });
+      gsap?.set(progress, { scaleX: 0 });
     }
+  };
+  window.addEventListener('pageshow', () => {
+    resetHorizontalBeforeStart();
+    if (window.ScrollTrigger) {
+      requestAnimationFrame(() => { ScrollTrigger.refresh(true); resetHorizontalBeforeStart(); });
+      window.setTimeout(() => { ScrollTrigger.refresh(true); resetHorizontalBeforeStart(); }, 250);
+    }
+  });
+  window.addEventListener('hashchange', () => requestAnimationFrame(resetHorizontalBeforeStart));
+  document.querySelectorAll('.footer-connect form').forEach(form => {
+    form.addEventListener('submit', event => event.preventDefault());
   });
 })();

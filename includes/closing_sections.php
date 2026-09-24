@@ -5,13 +5,6 @@
     <article class="news-card"><a href="#news-sustainable"><div class="news-image"><img src="assets/images/sustainability_bg.jpg" alt="Sustainable industrial facility"></div><div class="news-meta"><span>02 SEPTEMBER 2026</span><small>SUSTAINABILITY</small></div><h3>Building stronger infrastructure with a more responsible approach to steel</h3><i>↗</i></a></article>
   </div>
 </section>
-
-<section class="brand-story" aria-labelledby="brandStoryTitle">
-  <div class="brand-orb brand-orb-one"></div><div class="brand-orb brand-orb-two"></div>
-  <div class="brand-story-copy"><p>WHO WE ARE</p><h2 id="brandStoryTitle">Building nations.<br>Empowering <em>communities.</em></h2><div><p>Maruti TMX combines manufacturing discipline, technical expertise and an unwavering commitment to quality to produce steel that supports safer, stronger structures.</p><a href="#our-story">Discover our story <span>→</span></a></div></div>
-  <div class="brand-stack" aria-hidden="true"><figure><img src="assets/images/sustainability_bg.jpg" alt=""></figure><figure><img src="assets/images/steel-production.jpg" alt=""></figure><figure><img src="assets/images/hero_bg.jpg" alt=""></figure></div>
-</section>
-
 <section class="careers-section" id="careers" aria-labelledby="careersTitle">
   <div class="careers-head"><div><p>BUILD YOUR FUTURE WITH US</p><h2 id="careersTitle">Join us</h2><span>Bring your ambition, ideas and can-do attitude to a team that is building lasting strength.</span></div><a href="#openings">View opportunities <span>↗</span></a></div>
   <div class="career-accordion" data-career-accordion>
@@ -21,11 +14,18 @@
   </div>
 </section>
 
+<section class="footer-cta" id="contact">
+  <div class="footer-cta-main"><div><p>BUILT TOGETHER. BUILT TO LAST.</p><h2>Let’s build something<br>stronger together.</h2></div><a href="#enquire">Talk to our team <span>↗</span></a></div>
+  <div class="footer-cta-strip"><a href="mailto:info@marutitmx.com">info@marutitmx.com</a><a href="#enquire">Discuss your next project <span>↗</span></a></div>
+</section>
 <footer class="main-footer">
-  <div class="footer-top"><div class="footer-brand"><img src="assets/images/logoq.png" alt="Banke Bihari Industries"><p>CRS Maruti TMX 550+ steel for structures designed to endure.</p><a href="mailto:info@marutitmx.com">info@marutitmx.com</a><a href="tel:+911800000550">+91 1800 000 550</a></div>
-    <div class="footer-links"><div><h3>Company</h3><a href="#about">About us</a><a href="#strength">Why Maruti</a><a href="#manufacturing">Manufacturing</a><a href="#careers">Careers</a></div><div><h3>Product</h3><a href="#products">CRS Maruti TMX 550+</a><a href="#quality">Quality</a><a href="#specifications">Specifications</a><a href="#dealers">Dealer network</a></div><div><h3>Resources</h3><a href="#news">Newsroom</a><a href="#downloads">Downloads</a><a href="#contact">Contact us</a><a href="#sitemap">Sitemap</a></div><div><h3>Policies</h3><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a><a href="#disclaimer">Disclaimer</a><a href="#cookies">Cookie policy</a></div></div>
+  <div class="footer-grid">
+    <div class="footer-brand"><img src="assets/images/logoq.png" alt="Banke Bihari Industries"><p>CRS Maruti TMX 550+ steel engineered for safer, stronger and longer-lasting structures across India.</p><div class="footer-contact"><a href="tel:+911800000550">+91 1800 000 550</a><a href="mailto:info@marutitmx.com">info@marutitmx.com</a></div></div>
+    <div class="footer-column"><h3>Top links</h3><a href="#about">About us</a><a href="#products">CRS Maruti TMX 550+</a><a href="#strength">Why Maruti</a><a href="#dealers">Dealer network</a><a href="#careers">Careers</a></div>
+    <div class="footer-column"><h3>Resources</h3><a href="#quality">Quality</a><a href="#news">Newsroom</a><a href="#downloads">Downloads</a><a href="#projects">Projects</a><a href="#contact">Contact us</a></div>
+    <div class="footer-connect"><h3>Stay connected</h3><form><label class="sr-only" for="footerEmail">Your email address</label><div><input id="footerEmail" type="email" placeholder="Your email address"><button type="submit" aria-label="Subscribe">→</button></div></form><p>By subscribing, you agree to receive product, company and industry updates from Maruti TMX.</p><h3 class="capability-title">Our capabilities</h3><div class="footer-capabilities"><a href="#manufacturing">TMX manufacturing</a><a href="#quality">Quality testing</a><a href="#distribution">Pan-India distribution</a><a href="#technical">Technical support</a></div></div>
   </div>
-  <div class="footer-social"><span>© <?php echo date('Y'); ?> Banke Bihari Industries. All rights reserved.</span><div><a href="#linkedin">LinkedIn</a><a href="#instagram">Instagram</a><a href="#youtube">YouTube</a><a href="#facebook">Facebook</a></div></div>
+  <div class="footer-bottom"><span>© <?php echo date('Y'); ?> Banke Bihari Industries. All rights reserved.</span><div class="footer-policies"><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a><a href="#disclaimer">Disclaimer</a><a href="#cookies">Cookie policy</a></div><div class="footer-networks"><a href="#linkedin">LinkedIn</a><a href="#instagram">Instagram</a><a href="#youtube">YouTube</a></div></div>
   <div class="footer-wordmark" aria-hidden="true">MARUTI <em>TMX</em></div>
 </footer>
 <a class="brochure-float" href="#downloads"><span class="brochure-icon">↓</span><span>Download<br>brochure</span><i></i></a>
