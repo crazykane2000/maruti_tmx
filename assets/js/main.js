@@ -88,35 +88,45 @@
     if (horizontalSection && horizontalTrack) {
       const horizontalMedia = gsap.matchMedia();
       horizontalMedia.add('(min-width: 901px)', () => {
-        const getDistance = () => Math.max(0, horizontalTrack.scrollWidth - window.innerWidth);
-        const horizontalTween = gsap.to(horizontalTrack, {
-          x: () => -getDistance(),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: horizontalSection,
-            start: 'top top',
-            end: () => `+=${getDistance()}`,
-            pin: '.horizontal-viewport',
-            scrub: 0.85,
-            invalidateOnRefresh: true,
-            anticipatePin: 1,
-            onRefresh: self => {
-              if (window.scrollY <= self.start + 2) {
-                gsap.set(horizontalTrack, { x: 0 });
-                gsap.set(horizontalProgress, { scaleX: 0 });
-              }
-            },
-            onLeaveBack: () => {
-              gsap.set(horizontalTrack, { x: 0 });
-              gsap.set(horizontalProgress, { scaleX: 0 });
-            },
-            onUpdate: self => {
-              if (self.progress <= 0.0001) gsap.set(horizontalTrack, { x: 0 });
-              gsap.set(horizontalProgress, { scaleX: self.progress });
-            }
-          }
-        });
-        return () => horizontalTween.kill();
+        let distance = 0;
+        let sectionTop = 0;
+        let ticking = false;
+
+        const measure = () => {
+          gsap.set(horizontalTrack, { x: 0 });
+          distance = Math.max(0, horizontalTrack.scrollWidth - window.innerWidth);
+          horizontalSection.style.height = `${window.innerHeight + distance}px`;
+          sectionTop = horizontalSection.getBoundingClientRect().top + window.scrollY;
+        };
+        const render = () => {
+          ticking = false;
+          const progress = distance > 0 ? Math.min(1, Math.max(0, (window.scrollY - sectionTop) / distance)) : 0;
+          gsap.set(horizontalTrack, { x: -distance * progress });
+          gsap.set(horizontalProgress, { scaleX: progress });
+        };
+        const requestRender = () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(render);
+        };
+        const refresh = () => {
+          measure();
+          render();
+        };
+
+        window.addEventListener('scroll', requestRender, { passive: true });
+        window.addEventListener('resize', refresh);
+        requestAnimationFrame(refresh);
+        window.setTimeout(refresh, 250);
+        window.setTimeout(refresh, 900);
+
+        return () => {
+          window.removeEventListener('scroll', requestRender);
+          window.removeEventListener('resize', refresh);
+          horizontalSection.style.height = '';
+          gsap.set(horizontalTrack, { clearProps: 'transform' });
+          gsap.set(horizontalProgress, { clearProps: 'transform' });
+        };
       });
     }
   }
@@ -308,25 +318,187 @@
       scrollTrigger: { trigger: '.career-accordion', start: 'top 84%', toggleActions: 'play none none reverse' }
     });
   }
-  const resetHorizontalBeforeStart = () => {
-    const section = document.querySelector('.horizontal-story');
-    const track = document.querySelector('.horizontal-track');
-    const progress = document.querySelector('.horizontal-progress i');
-    if (!section || !track || window.innerWidth <= 900) return;
-    const top = section.getBoundingClientRect().top + window.scrollY;
-    if (window.scrollY <= top + 2) {
-      gsap?.set(track, { x: 0 });
-      gsap?.set(progress, { scaleX: 0 });
-    }
+  const refreshStoryPosition = () => {
+    if (!window.ScrollTrigger) return;
+    ScrollTrigger.refresh(true);
+    ScrollTrigger.update();
   };
   window.addEventListener('pageshow', () => {
-    resetHorizontalBeforeStart();
-    if (window.ScrollTrigger) {
-      requestAnimationFrame(() => { ScrollTrigger.refresh(true); resetHorizontalBeforeStart(); });
-      window.setTimeout(() => { ScrollTrigger.refresh(true); resetHorizontalBeforeStart(); }, 250);
-    }
+    requestAnimationFrame(refreshStoryPosition);
+    window.setTimeout(refreshStoryPosition, 250);
+    window.setTimeout(refreshStoryPosition, 900);
   });
-  window.addEventListener('hashchange', () => requestAnimationFrame(resetHorizontalBeforeStart));
+  window.addEventListener('hashchange', () => {
+    requestAnimationFrame(refreshStoryPosition);
+    window.setTimeout(refreshStoryPosition, 250);
+  });
+
+  document.querySelectorAll('[data-image-sequence]').forEach(section => {
+    const canvas = section.querySelector('.sequence-canvas');
+    const context = canvas?.getContext('2d');
+    const stage = section.querySelector('.sequence-stage');
+    const loading = section.querySelector('.sequence-loading');
+    const progressBar = section.querySelector('.sequence-progress i');
+    const captionInner = section.querySelector('.sequence-caption-inner');
+    const eyebrow = section.querySelector('.sequence-eyebrow');
+    const heading = section.querySelector('.sequence-caption h2');
+    const description = section.querySelector('.sequence-description');
+    const accent = section.querySelector('.sequence-accent i');
+    if (!canvas || !context || !stage) return;
+
+    const captions = [
+      ['01 — TMT QUALITY', 'High Strength', 'Built for dependable load-bearing performance with strong structural support for demanding construction use.'],
+      ['02 — FLEXIBILITY', 'Superior Bendability', 'Engineered to bend with ease during fabrication while maintaining its core strength and integrity.'],
+      ['03 — SAFETY', 'Earthquake Resistance', 'High ductility helps the structure absorb stress better, making it more reliable in seismic conditions.'],
+      ['04 — BONDING', 'Better Grip', 'Designed for excellent bonding with concrete to improve structural hold and long-term stability.'],
+      ['05 — DURABILITY', 'Corrosion Resistance', 'Enhanced resistance against rust and environmental wear helps increase the life of the structure.'],
+      ['06 — PERFORMANCE', 'Thermal Stability', 'Consistent performance under temperature variation supports reliability, longevity, and structural confidence.']
+    ];
+    const frameCount = 120;
+    const images = new Array(frameCount);
+    const states = new Array(frameCount).fill(0);
+    const queue = [];
+    const queued = new Set();
+    let loadingCount = 0;
+    let currentFrame = 0;
+    let activeCaption = -1;
+    let ticking = false;
+    let width = 0;
+    let height = 0;
+    let ratio = 1;
+
+    const framePath = index => `assets/images/seq/ezgif-frame-${String(index + 1).padStart(3, '0')}.jpg`;
+    const draw = requested => {
+      let image = images[requested];
+      if (!image) {
+        for (let offset = 1; offset < frameCount && !image; offset++) image = images[requested - offset] || images[requested + offset];
+      }
+      if (!image || !image.naturalWidth) return;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, width, height);
+      const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      const x = (width - drawWidth) / 2 + Math.min(width * .045, 46);
+      const y = (height - drawHeight) / 2;
+      context.drawImage(image, x, y, drawWidth, drawHeight);
+      loading?.classList.add('is-hidden');
+    };
+    const pump = () => {
+      while (loadingCount < 5 && queue.length) {
+        const index = queue.shift();
+        queued.delete(index);
+        if (states[index]) continue;
+        states[index] = 1;
+        loadingCount++;
+        const image = new Image();
+        image.decoding = 'async';
+        image.onload = () => {
+          images[index] = image;
+          states[index] = 2;
+          loadingCount--;
+          if (index === currentFrame || !images[currentFrame]) draw(currentFrame);
+          pump();
+        };
+        image.onerror = () => { states[index] = 3; loadingCount--; pump(); };
+        image.src = framePath(index);
+      }
+    };
+    const requestFrame = index => {
+      if (index < 0 || index >= frameCount || states[index] || queued.has(index)) return;
+      queued.add(index);
+      queue.push(index);
+    };
+    const preloadAround = index => {
+      requestFrame(index);
+      for (let radius = 1; radius <= 8; radius++) {
+        requestFrame(index + radius);
+        requestFrame(index - radius);
+      }
+      pump();
+    };
+    const resize = () => {
+      const bounds = stage.getBoundingClientRect();
+      width = Math.max(1, bounds.width);
+      height = Math.max(1, bounds.height);
+      ratio = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      draw(currentFrame);
+    };
+    const smoothstep = value => value * value * (3 - 2 * value);
+    const render = () => {
+      ticking = false;
+      const bounds = section.getBoundingClientRect();
+      const travel = Math.max(1, section.offsetHeight - window.innerHeight);
+      const progress = Math.min(1, Math.max(0, -bounds.top / travel));
+      currentFrame = Math.min(frameCount - 1, Math.round(progress * (frameCount - 1)));
+      preloadAround(currentFrame);
+      draw(currentFrame);
+      if (progressBar) progressBar.style.transform = `scaleX(${progress})`;
+
+      const rawCaption = Math.min(captions.length - .0001, progress * captions.length);
+      const captionIndex = Math.floor(rawCaption);
+      const local = rawCaption - captionIndex;
+      if (captionIndex !== activeCaption) {
+        activeCaption = captionIndex;
+        eyebrow.textContent = captions[captionIndex][0];
+        heading.textContent = captions[captionIndex][1];
+        description.textContent = captions[captionIndex][2];
+      }
+      const fadeIn = smoothstep(Math.min(1, local / .14));
+      const fadeOut = smoothstep(Math.min(1, (1 - local) / .14));
+      const visibility = Math.max(.04, Math.min(fadeIn, fadeOut));
+      captionInner.style.opacity = visibility;
+      captionInner.style.transform = `translateY(${(1 - visibility) * 15}px)`;
+      captionInner.style.filter = `blur(${(1 - visibility) * 7}px)`;
+      if (accent) accent.style.transform = `scaleX(${Math.max(.08, visibility)})`;
+    };
+    const requestRender = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(render);
+    };
+
+    requestFrame(0);
+    pump();
+    resize();
+    render();
+    window.addEventListener('scroll', requestRender, { passive: true });
+    window.addEventListener('resize', () => { resize(); requestRender(); });
+    if ('ResizeObserver' in window) new ResizeObserver(resize).observe(stage);
+  });
+  document.querySelectorAll('[data-india-map]').forEach(map => {
+    const tooltip = map.querySelector('.map-tooltip');
+    const title = tooltip?.querySelector('strong');
+    const activeIds = ['IN-DL', 'IN-UP', 'IN-MP', 'IN-BR', 'IN-TG', 'IN-MH', 'IN-OR', 'IN-KA', 'IN-AP'];
+    const stateNames = { 'IN-DL': 'Delhi NCR', 'IN-UP': 'Uttar Pradesh', 'IN-MP': 'Madhya Pradesh', 'IN-BR': 'Bihar', 'IN-TG': 'Telangana', 'IN-MH': 'Maharashtra', 'IN-OR': 'Odisha', 'IN-KA': 'Karnataka', 'IN-AP': 'Andhra Pradesh' };
+    activeIds.forEach(id => {
+      const state = map.querySelector(`#${id}`);
+      if (!state) return;
+      state.classList.add('is-network-state');
+      state.setAttribute('tabindex', '0');
+      state.setAttribute('role', 'button');
+      state.setAttribute('aria-label', `${stateNames[id]} — Maruti TMX network`);
+      const show = event => {
+        if (!tooltip || !title) return;
+        title.textContent = stateNames[id];
+        tooltip.classList.add('is-visible');
+        tooltip.setAttribute('aria-hidden', 'false');
+        const bounds = map.getBoundingClientRect();
+        const x = event.clientX ? event.clientX - bounds.left : bounds.width / 2;
+        const y = event.clientY ? event.clientY - bounds.top : bounds.height / 2;
+        tooltip.style.left = `${Math.min(bounds.width - 20, Math.max(20, x))}px`;
+        tooltip.style.top = `${Math.min(bounds.height - 20, Math.max(20, y))}px`;
+      };
+      const hide = () => { tooltip?.classList.remove('is-visible'); tooltip?.setAttribute('aria-hidden', 'true'); };
+      state.addEventListener('pointerenter', show);
+      state.addEventListener('pointermove', show);
+      state.addEventListener('pointerleave', hide);
+      state.addEventListener('focus', show);
+      state.addEventListener('blur', hide);
+    });
+  });
   document.querySelectorAll('.footer-connect form').forEach(form => {
     form.addEventListener('submit', event => event.preventDefault());
   });

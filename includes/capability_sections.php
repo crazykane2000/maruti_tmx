@@ -15,16 +15,39 @@
     </div>
     <div class="coverage-visual" aria-label="Maruti TMX distribution network across India">
       <div class="coverage-orbit orbit-one"></div><div class="coverage-orbit orbit-two"></div>
-      <svg class="india-mark" viewBox="0 0 420 520" role="img" aria-label="Abstract India coverage map">
-        <path d="M148 24l60 18 45 46 58 16 18 55-37 42-9 64-43 45-4 74-38 102-31-48-23-69-52-59 23-60-31-42 25-49-8-62z"/>
-        <path class="map-line" d="M148 85l99 62-126 98 116 95-70 98M94 208l198-7M123 309l113-99"/>
-      </svg>
-      <span class="network-node node-north"><i></i>North</span><span class="network-node node-west"><i></i>West</span><span class="network-node node-central"><i></i>Central</span><span class="network-node node-east"><i></i>East</span><span class="network-node node-south"><i></i>South</span>
-      <div class="coverage-label"><small>DISTRIBUTION FOCUS</small><strong>Built to reach<br>every ambition.</strong></div>
+      <div class="india-map-wrap" data-india-map>
+        <?php
+          $indiaSvg = file_get_contents(__DIR__ . '/../assets/images/india.svg');
+          echo preg_replace('/<svg\b/', '<svg class="india-map-svg"', $indiaSvg, 1);
+        ?>
+        <div class="map-tooltip" role="tooltip" aria-hidden="true"><strong></strong><span>Maruti TMX network</span></div>
+      </div>
+      <div class="map-state-list" aria-label="Highlighted distribution states">
+        <span>Delhi NCR</span><span>Uttar Pradesh</span><span>Madhya Pradesh</span><span>Bihar</span><span>Telangana</span><span>Maharashtra</span><span>Odisha</span><span>Karnataka</span><span>Andhra Pradesh</span>
+      </div>      <div class="coverage-label"><small>DISTRIBUTION FOCUS</small><strong>Built to reach<br>every ambition.</strong></div>
     </div>
   </div>
 </section>
 
+<section class="sequence-section" id="performance" data-image-sequence aria-labelledby="sequenceTitle">
+  <div class="sequence-sticky">
+    <div class="sequence-stage">
+      <canvas class="sequence-canvas" aria-label="Animated CRS Maruti TMX product performance sequence"></canvas>
+      <div class="sequence-shade"></div>
+      <div class="sequence-progress" aria-hidden="true"><i></i></div>
+      <div class="sequence-caption" aria-live="polite">
+        <div class="sequence-caption-inner">
+          <p class="sequence-eyebrow">01 — TMT QUALITY</p>
+          <span class="sequence-accent"><i></i></span>
+          <h2 id="sequenceTitle">High Strength</h2>
+          <p class="sequence-description">Built for dependable load-bearing performance with strong structural support for demanding construction use.</p>
+        </div>
+      </div>
+      <div class="sequence-loading">Loading first frame…</div>
+      <div class="sequence-index"><span>01</span><i></i><span>06</span></div>
+    </div>
+  </div>
+</section>
 <section class="strength-source" id="source" aria-labelledby="sourceTitle">
   <div class="source-copy">
     <p class="section-kicker"><i></i> THE MARUTI ADVANTAGE</p>
